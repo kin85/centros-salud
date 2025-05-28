@@ -29,6 +29,11 @@
       background-color: red !important;
       color: white;
     }
+
+    tfoot td {
+      font-weight: bold;
+      background-color: #f9f9f9;
+    }
   </style>
 </head>
 <body>
@@ -41,8 +46,14 @@
       </tr>
     </thead>
     <tbody>
-      <!-- Aquí van los datos -->
+      <!-- Datos se llenan por JS -->
     </tbody>
+    <tfoot>
+      <tr>
+        <td>Total</td>
+        <td id="totalPacientes">0</td>
+      </tr>
+    </tfoot>
   </table>
 
   <script>
@@ -84,15 +95,26 @@
     ];
 
     const tbody = document.querySelector("#centrosTable tbody");
+    const totalDisplay = document.getElementById("totalPacientes");
+
+    let total = 0;
 
     datos.forEach(([centro, pacientes]) => {
+      total += pacientes;
+
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${centro}</td><td>${pacientes}</td>`;
+
       tr.addEventListener("click", () => {
-        tr.classList.toggle("selected");
+        const isSelected = tr.classList.toggle("selected");
+        total += isSelected ? -pacientes : pacientes;
+        totalDisplay.textContent = total;
       });
+
       tbody.appendChild(tr);
     });
+
+    totalDisplay.textContent = total;
   </script>
 </body>
 </html>
