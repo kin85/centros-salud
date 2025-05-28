@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Centros de Salud</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+
+    tr:hover {
+      background-color: #f2f2f2;
+    }
+
+    .selected {
+      background-color: red !important;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Centros de Salud de la Comunidad Valenciana</h1>
+  <table id="centrosTable">
+    <thead>
+      <tr>
+        <th>Centro</th>
+        <th>Pacientes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Aquí van los datos -->
+    </tbody>
+  </table>
+
+  <script>
+    const datos = [
+      ["Hospital de xativa", 96],
+      ["Centro de salud de xativa", 1],
+      ["Centro de salud de canals", 2],
+      ["Centro de salud Aielo", 1],
+      ["Hospital de Ontinyent", 38],
+      ["Centro de salud Chella", 1],
+      ["Centro de salud Olleria", 2],
+      ["Centro de salud Albaida", 1],
+      ["Centro de salud Ontinyent 1", 3],
+      ["Centro de salud Ontinyent 2", 1],
+      ["Centro de salud Muro de Alcoy", 1],
+      ["Centro de salud Cocentaina", 2],
+      ["Hospital de Alcoy", 10],
+      ["Centro de salud de Alcoy 1", 2],
+      ["Centro de salud de Alcoy 2", 1],
+      ["Centro de salud de Alcoy 3", 2],
+      ["Centro de salud Silla", 3],
+      ["Centro de salud Catarroja", 2],
+      ["Centro de salud Alcasser", 1],
+      ["Centro de salud Alberic", 1],
+      ["Centro de salud Alcudia", 1],
+      ["Centro de salud Carlet", 3],
+      ["Centro de salud Guadassuar", 1],
+      ["Centro de salud Ibi", 2],
+      ["Centro sanitario integrado Ibi", 1],
+      ["Hospital de Gandia", 150],
+      ["Centro de salud Gandia", 1],
+      ["Unidad basica rehabilitacion Gandia", 2],
+      ["Centro salud mental Gandia", 1],
+      ["Centro salud integrado Gandia", 2],
+      ["Centro de salud Bellreguart", 1],
+      ["Hospital Alzira", 96],
+      ["Hospital la Fe", 800],
+      ["Hospital clinic valencia", 220]
+    ];
+
+    const tbody = document.querySelector("#centrosTable tbody");
+
+    datos.forEach(([centro, pacientes]) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${centro}</td><td>${pacientes}</td>`;
+      tr.addEventListener("click", () => {
+        tr.classList.toggle("selected");
+      });
+      tbody.appendChild(tr);
+    });
+  </script>
+</body>
+</html>
