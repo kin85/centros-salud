@@ -35,15 +35,12 @@
       background-color: #f9f9f9;
     }
 
-    .move-buttons {
-      display: flex;
-      gap: 5px;
+    tr.dragging {
+      opacity: 0.5;
     }
 
-    button {
-      padding: 2px 6px;
-      font-size: 12px;
-      cursor: pointer;
+    tr.drop-target {
+      outline: 2px dashed #999;
     }
   </style>
 </head>
@@ -54,23 +51,19 @@
       <tr>
         <th>Centro</th>
         <th>Pacientes</th>
-        <th>Acciones</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- Se rellena con JS -->
-    </tbody>
+    <tbody></tbody>
     <tfoot>
       <tr>
         <td>Total</td>
         <td id="totalPacientes">0</td>
-        <td></td>
       </tr>
     </tfoot>
   </table>
 
   <script>
-    const datos = [
+    const defaultDatos = [
       ["Hospital de xativa", 96],
       ["Centro de salud de xativa", 1],
       ["Centro de salud de canals", 2],
@@ -110,47 +103,98 @@
     const tbody = document.querySelector("#centrosTable tbody");
     const totalDisplay = document.getElementById("totalPacientes");
 
+    let draggedRow = null;
     let total = 0;
 
-    datos.forEach(([centro, pacientes]) => {
-      total += pacientes;
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${centro}</td>
-        <td>${pacientes}</td>
-        <td class="move-buttons">
-          <button class="up">▲</button>
-          <button class="down">▼</button>
-        </td>
-      `;
-
-      // Selección de fila
-      tr.addEventListener("click", (e) => {
-        if (e.target.tagName === "BUTTON") return; // Ignora clics en botones
-        const isSelected = tr.classList.toggle("selected");
-        total += isSelected ? -pacientes : pacientes;
-        totalDisplay.textContent = total;
+    function guardarEstado() {
+      const filas = [...tbody.querySelectorAll("tr")];
+      const estado = filas.map(tr => {
+        return {
+          centro: tr.cells[0].textContent,
+          pacientes: Number(tr.cells[1].textContent),
+          seleccionado: tr.classList.contains("selected")
+        };
       });
+      localStorage.setItem("estadoCentros", JSON.stringify(estado));
+    }
 
-      // Mover hacia arriba
-      tr.querySelector(".up").addEventListener("click", () => {
-        const prev = tr.previousElementSibling;
-        if (prev) tbody.insertBefore(tr, prev);
-      });
+    function cargarEstado() {
+      const guardado = localStorage.getItem("estadoCentros");
+      if (guardado) {
+        return JSON.parse(guardado);
+      } else {
+        return defaultDatos.map(([centro, pacientes]) => ({
+          centro,
+          pacientes,
+          seleccionado: false
+        }));
+      }
+    }
 
-      // Mover hacia abajo
-      tr.querySelector(".down").addEventListener("click", () => {
-        const next = tr.nextElementSibling;
-        if (next && next.tagName === "TR") {
-          tbody.insertBefore(next, tr);
+    function renderTabla() {
+      tbody.innerHTML = "";
+      total = 0;
+      const datos = cargarEstado();
+
+      datos.forEach(({ centro, pacientes, seleccionado }) => {
+        const tr = document.createElement("tr");
+        tr.draggable = true;
+        tr.innerHTML = `<td>${centro}</td><td>${pacientes}</td>`;
+
+        if (seleccionado) {
+          tr.classList.add("selected");
+          total -= pacientes;
+        } else {
+          total += pacientes;
         }
+
+        // Selección al hacer clic
+        tr.addEventListener("click", (e) => {
+          if (e.target.tagName === "TD") {
+            const isSelected = tr.classList.toggle("selected");
+            total += isSelected ? -pacientes : pacientes;
+            totalDisplay.textContent = total;
+            guardarEstado();
+          }
+        });
+
+        // Arrastrar
+        tr.addEventListener("dragstart", () => {
+          draggedRow = tr;
+          tr.classList.add("dragging");
+        });
+
+        tr.addEventListener("dragend", () => {
+          draggedRow = null;
+          tr.classList.remove("dragging");
+        });
+
+        tr.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          if (draggedRow && draggedRow !== tr) {
+            tr.classList.add("drop-target");
+          }
+        });
+
+        tr.addEventListener("dragleave", () => {
+          tr.classList.remove("drop-target");
+        });
+
+        tr.addEventListener("drop", () => {
+          if (draggedRow && draggedRow !== tr) {
+            tr.classList.remove("drop-target");
+            tbody.insertBefore(draggedRow, tr);
+            guardarEstado();
+          }
+        });
+
+        tbody.appendChild(tr);
       });
 
-      tbody.appendChild(tr);
-    });
+      totalDisplay.textContent = total;
+    }
 
-    totalDisplay.textContent = total;
+    renderTabla();
   </script>
 </body>
 </html>
