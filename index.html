@@ -8,39 +8,72 @@
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
+      background: #f9f9f9;
+    }
+
+    h1 {
+      text-align: center;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 20px;
+      background-color: white;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     th, td {
-      padding: 8px 12px;
-      border: 1px solid #ccc;
+      padding: 10px;
+      border: 1px solid #ddd;
       text-align: left;
     }
 
+    th {
+      background-color: #e3e3e3;
+    }
+
     tr:hover {
-      background-color: #f2f2f2;
+      background-color: #f1f1f1;
     }
 
     .selected {
-      background-color: red !important;
+      background-color: #ff4d4d !important;
       color: white;
     }
 
     tfoot td {
       font-weight: bold;
-      background-color: #f9f9f9;
+      background-color: #e3e3e3;
     }
 
-    tr.dragging {
-      opacity: 0.5;
+    .actions button {
+      margin-right: 4px;
+      padding: 4px 6px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      border-radius: 4px;
     }
 
-    tr.drop-target {
-      outline: 2px dashed #999;
+    .actions button:hover {
+      background-color: #0056b3;
+    }
+
+    .actions .delete {
+      background-color: #dc3545;
+    }
+
+    .actions .delete:hover {
+      background-color: #a71d2a;
+    }
+
+    .row-number {
+      width: 40px;
+      text-align: center;
+      font-weight: bold;
+      color: #555;
     }
   </style>
 </head>
@@ -49,15 +82,18 @@
   <table id="centrosTable">
     <thead>
       <tr>
+        <th>#</th>
         <th>Centro</th>
         <th>Pacientes</th>
+        <th>Acciones</th>
       </tr>
     </thead>
     <tbody></tbody>
     <tfoot>
       <tr>
-        <td>Total</td>
+        <td colspan="2">Total</td>
         <td id="totalPacientes">0</td>
+        <td></td>
       </tr>
     </tfoot>
   </table>
@@ -69,49 +105,33 @@
       ["Centro de salud de canals", 2],
       ["Centro de salud Aielo", 1],
       ["Hospital de Ontinyent", 38],
-      ["Centro de salud Chella", 1],
-      ["Centro de salud Olleria", 2],
-      ["Centro de salud Albaida", 1],
-      ["Centro de salud Ontinyent 1", 3],
-      ["Centro de salud Ontinyent 2", 1],
-      ["Centro de salud Muro de Alcoy", 1],
-      ["Centro de salud Cocentaina", 2],
-      ["Hospital de Alcoy", 10],
-      ["Centro de salud de Alcoy 1", 2],
-      ["Centro de salud de Alcoy 2", 1],
-      ["Centro de salud de Alcoy 3", 2],
-      ["Centro de salud Silla", 3],
-      ["Centro de salud Catarroja", 2],
-      ["Centro de salud Alcasser", 1],
       ["Centro de salud Alberic", 1],
       ["Centro de salud Alcudia", 1],
       ["Centro de salud Carlet", 3],
-      ["Centro de salud Guadassuar", 1],
-      ["Centro de salud Ibi", 2],
-      ["Centro sanitario integrado Ibi", 1],
+      ["Hospital de Alcoy", 10],
+      ["Centro de salud Olleria", 2],
+      ["Centro de salud Chella", 1],
+      ["Centro de salud Albaida", 1],
+      ["Centro de salud Ontinyent 1", 3],
+      ["Centro de salud Ontinyent 2", 1],
+      ["Centro de salud Silla", 3],
+      ["Centro de salud Catarroja", 2],
       ["Hospital de Gandia", 150],
-      ["Centro de salud Gandia", 1],
-      ["Unidad basica rehabilitacion Gandia", 2],
-      ["Centro salud mental Gandia", 1],
-      ["Centro salud integrado Gandia", 2],
-      ["Centro de salud Bellreguart", 1],
       ["Hospital Alzira", 96],
       ["Hospital la Fe", 800],
-      ["Hospital clinic valencia", 220]
+      ["Hospital clinic valencia", 220],
+      ["Hospital Elda", 211]
     ];
 
     const tbody = document.querySelector("#centrosTable tbody");
     const totalDisplay = document.getElementById("totalPacientes");
 
-    let draggedRow = null;
-    let total = 0;
-
     function guardarEstado() {
       const filas = [...tbody.querySelectorAll("tr")];
       const estado = filas.map(tr => {
         return {
-          centro: tr.cells[0].textContent,
-          pacientes: Number(tr.cells[1].textContent),
+          centro: tr.cells[1].textContent,
+          pacientes: Number(tr.cells[2].textContent),
           seleccionado: tr.classList.contains("selected")
         };
       });
@@ -133,65 +153,70 @@
 
     function renderTabla() {
       tbody.innerHTML = "";
-      total = 0;
+      let total = 0;
       const datos = cargarEstado();
 
-      datos.forEach(({ centro, pacientes, seleccionado }) => {
+      datos.forEach((item, index) => {
         const tr = document.createElement("tr");
-        tr.draggable = true;
-        tr.innerHTML = `<td>${centro}</td><td>${pacientes}</td>`;
+        if (item.seleccionado) tr.classList.add("selected");
 
-        if (seleccionado) {
-          tr.classList.add("selected");
-          total -= pacientes;
-        } else {
-          total += pacientes;
-        }
+        tr.innerHTML = `
+          <td class="row-number">${index + 1}</td>
+          <td>${item.centro}</td>
+          <td>${item.pacientes}</td>
+          <td class="actions">
+            <button class="up">▲</button>
+            <button class="down">▼</button>
+            <button class="delete">🗑️</button>
+          </td>
+        `;
 
-        // Selección al hacer clic
         tr.addEventListener("click", (e) => {
-          if (e.target.tagName === "TD") {
-            const isSelected = tr.classList.toggle("selected");
-            total += isSelected ? -pacientes : pacientes;
+          if (e.target.tagName !== "BUTTON") {
+            const selected = tr.classList.toggle("selected");
+            total += selected ? -item.pacientes : item.pacientes;
             totalDisplay.textContent = total;
             guardarEstado();
           }
         });
 
-        // Arrastrar
-        tr.addEventListener("dragstart", () => {
-          draggedRow = tr;
-          tr.classList.add("dragging");
+        // Subir
+        tr.querySelector(".up").addEventListener("click", (e) => {
+          e.stopPropagation();
+          const prev = tr.previousElementSibling;
+          if (prev) tbody.insertBefore(tr, prev);
+          actualizarNumeros();
+          guardarEstado();
         });
 
-        tr.addEventListener("dragend", () => {
-          draggedRow = null;
-          tr.classList.remove("dragging");
+        // Bajar
+        tr.querySelector(".down").addEventListener("click", (e) => {
+          e.stopPropagation();
+          const next = tr.nextElementSibling;
+          if (next) tbody.insertBefore(next, tr);
+          actualizarNumeros();
+          guardarEstado();
         });
 
-        tr.addEventListener("dragover", (e) => {
-          e.preventDefault();
-          if (draggedRow && draggedRow !== tr) {
-            tr.classList.add("drop-target");
-          }
-        });
-
-        tr.addEventListener("dragleave", () => {
-          tr.classList.remove("drop-target");
-        });
-
-        tr.addEventListener("drop", () => {
-          if (draggedRow && draggedRow !== tr) {
-            tr.classList.remove("drop-target");
-            tbody.insertBefore(draggedRow, tr);
-            guardarEstado();
-          }
+        // Eliminar
+        tr.querySelector(".delete").addEventListener("click", (e) => {
+          e.stopPropagation();
+          tbody.removeChild(tr);
+          actualizarNumeros();
+          guardarEstado();
         });
 
         tbody.appendChild(tr);
+        if (!item.seleccionado) total += item.pacientes;
       });
 
       totalDisplay.textContent = total;
+    }
+
+    function actualizarNumeros() {
+      [...tbody.querySelectorAll("tr")].forEach((tr, i) => {
+        tr.querySelector(".row-number").textContent = i + 1;
+      });
     }
 
     renderTabla();
