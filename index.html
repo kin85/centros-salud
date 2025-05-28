@@ -35,12 +35,15 @@
       background-color: #f9f9f9;
     }
 
-    tr.dragging {
-      opacity: 0.5;
+    .move-buttons {
+      display: flex;
+      gap: 5px;
     }
 
-    tr.drop-target {
-      outline: 2px dashed #999;
+    button {
+      padding: 2px 6px;
+      font-size: 12px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -51,15 +54,17 @@
       <tr>
         <th>Centro</th>
         <th>Pacientes</th>
+        <th>Acciones</th>
       </tr>
     </thead>
     <tbody>
-      <!-- Se genera con JS -->
+      <!-- Se rellena con JS -->
     </tbody>
     <tfoot>
       <tr>
         <td>Total</td>
         <td id="totalPacientes">0</td>
+        <td></td>
       </tr>
     </tfoot>
   </table>
@@ -106,49 +111,39 @@
     const totalDisplay = document.getElementById("totalPacientes");
 
     let total = 0;
-    let draggedRow = null;
 
     datos.forEach(([centro, pacientes]) => {
-      const tr = document.createElement("tr");
-      tr.draggable = true;
-      tr.innerHTML = `<td>${centro}</td><td>${pacientes}</td>`;
-
       total += pacientes;
 
-      // Seleccionar fila para restar/sumar
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${centro}</td>
+        <td>${pacientes}</td>
+        <td class="move-buttons">
+          <button class="up">▲</button>
+          <button class="down">▼</button>
+        </td>
+      `;
+
+      // Selección de fila
       tr.addEventListener("click", (e) => {
+        if (e.target.tagName === "BUTTON") return; // Ignora clics en botones
         const isSelected = tr.classList.toggle("selected");
         total += isSelected ? -pacientes : pacientes;
         totalDisplay.textContent = total;
       });
 
-      // Drag & Drop
-      tr.addEventListener("dragstart", () => {
-        draggedRow = tr;
-        tr.classList.add("dragging");
+      // Mover hacia arriba
+      tr.querySelector(".up").addEventListener("click", () => {
+        const prev = tr.previousElementSibling;
+        if (prev) tbody.insertBefore(tr, prev);
       });
 
-      tr.addEventListener("dragend", () => {
-        draggedRow = null;
-        tr.classList.remove("dragging");
-      });
-
-      tr.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        const dragging = document.querySelector(".dragging");
-        if (dragging !== tr) {
-          tr.classList.add("drop-target");
-        }
-      });
-
-      tr.addEventListener("dragleave", () => {
-        tr.classList.remove("drop-target");
-      });
-
-      tr.addEventListener("drop", () => {
-        if (draggedRow && draggedRow !== tr) {
-          tr.classList.remove("drop-target");
-          tbody.insertBefore(draggedRow, tr);
+      // Mover hacia abajo
+      tr.querySelector(".down").addEventListener("click", () => {
+        const next = tr.nextElementSibling;
+        if (next && next.tagName === "TR") {
+          tbody.insertBefore(next, tr);
         }
       });
 
