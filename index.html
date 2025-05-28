@@ -34,6 +34,14 @@
       font-weight: bold;
       background-color: #f9f9f9;
     }
+
+    tr.dragging {
+      opacity: 0.5;
+    }
+
+    tr.drop-target {
+      outline: 2px dashed #999;
+    }
   </style>
 </head>
 <body>
@@ -46,7 +54,7 @@
       </tr>
     </thead>
     <tbody>
-      <!-- Datos se llenan por JS -->
+      <!-- Se genera con JS -->
     </tbody>
     <tfoot>
       <tr>
@@ -98,17 +106,50 @@
     const totalDisplay = document.getElementById("totalPacientes");
 
     let total = 0;
+    let draggedRow = null;
 
     datos.forEach(([centro, pacientes]) => {
-      total += pacientes;
-
       const tr = document.createElement("tr");
+      tr.draggable = true;
       tr.innerHTML = `<td>${centro}</td><td>${pacientes}</td>`;
 
-      tr.addEventListener("click", () => {
+      total += pacientes;
+
+      // Seleccionar fila para restar/sumar
+      tr.addEventListener("click", (e) => {
         const isSelected = tr.classList.toggle("selected");
         total += isSelected ? -pacientes : pacientes;
         totalDisplay.textContent = total;
+      });
+
+      // Drag & Drop
+      tr.addEventListener("dragstart", () => {
+        draggedRow = tr;
+        tr.classList.add("dragging");
+      });
+
+      tr.addEventListener("dragend", () => {
+        draggedRow = null;
+        tr.classList.remove("dragging");
+      });
+
+      tr.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        const dragging = document.querySelector(".dragging");
+        if (dragging !== tr) {
+          tr.classList.add("drop-target");
+        }
+      });
+
+      tr.addEventListener("dragleave", () => {
+        tr.classList.remove("drop-target");
+      });
+
+      tr.addEventListener("drop", () => {
+        if (draggedRow && draggedRow !== tr) {
+          tr.classList.remove("drop-target");
+          tbody.insertBefore(draggedRow, tr);
+        }
       });
 
       tbody.appendChild(tr);
